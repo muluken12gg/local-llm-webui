@@ -26,6 +26,24 @@ header {
   padding: 1rem;
 }
 
+.status-banner,
+.error-banner {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.status-banner {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.error-banner {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .messages {
   min-height: 320px;
   margin-bottom: 1rem;

@@ -3,13 +3,54 @@ import { useState } from 'react';
 function App() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
 
-    setMessages((current) => [...current, { role: 'user', content: message }]);
+    const userMessage = message.trim();
+    const chatHistory = [
+      ...messages,
+      { role: 'user', content: userMessage },
+    ];
+
+    setMessages((current) => [...current, { role: 'user', content: userMessage }]);
     setMessage('');
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3',
+          messages: chatHistory,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get a response');
+      }
+
+      const data = await response.json();
+      const assistantText = data?.choices?.[0]?.message?.content || data?.response || 'No response received.';
+
+      setMessages((current) => [
+        ...current,
+        { role: 'assistant', content: assistantText },
+      ]);
+    } catch (err) {
+      setError(err.message || 'Unable to reach the backend');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,6 +72,9 @@ function App() {
             ))
           )}
         </div>
+
+        {error && <div className="error-banner">{error}</div>}
+        {loading && <div className="status-banner">Waiting for Ollama response...</div>}
 
         <form className="chat-form" onSubmit={handleSubmit}>
           <input
