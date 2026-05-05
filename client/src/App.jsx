@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -6,7 +6,30 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event) => {
+  // Load messages from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('ollama-chat-history');
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (err) {
+        console.warn('Failed to load chat history:', err);
+      }
+    }
+  }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('ollama-chat-history', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  const clearHistory = () => {
+    setMessages([]);
+    localStorage.removeItem('ollama-chat-history');
+  };
+
     event.preventDefault();
     if (!message.trim()) return;
 
@@ -57,6 +80,11 @@ function App() {
     <div className="app-shell">
       <header>
         <h1>Ollama Chat</h1>
+        {messages.length > 0 && (
+          <button className="clear-button" onClick={clearHistory}>
+            Clear History
+          </button>
+        )}
       </header>
 
       <main className="chat-window">

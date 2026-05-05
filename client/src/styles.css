@@ -19,6 +19,26 @@ header {
   margin-bottom: 1rem;
 }
 
+header h1 {
+  margin: 0;
+}
+
+.clear-button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d2d6dc;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.clear-button:hover {
+  background: #f3f4f6;
+}
+
+
 .chat-window {
   background: #fff;
   border-radius: 16px;
