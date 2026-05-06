@@ -67,6 +67,8 @@ header h1 {
 .messages {
   min-height: 320px;
   margin-bottom: 1rem;
+  overflow-y: auto;
+  max-height: 500px;
 }
 
 .message {
@@ -107,6 +109,12 @@ header h1 {
   outline: none;
 }
 
+.chat-form input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 .chat-form button {
   padding: 0 1.2rem;
   border: none;
@@ -114,6 +122,11 @@ header h1 {
   background: #2563eb;
   color: white;
   cursor: pointer;
+}
+
+.chat-form button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
 }
 
 .placeholder {

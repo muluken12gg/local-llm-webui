@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function App() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const messagesEndRef = useRef(null);
+
+  // Scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -30,6 +40,7 @@ function App() {
     localStorage.removeItem('ollama-chat-history');
   };
 
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
 
@@ -99,6 +110,7 @@ function App() {
               </div>
             ))
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {error && <div className="error-banner">{error}</div>}
@@ -110,8 +122,9 @@ function App() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
+            disabled={loading}
           />
-          <button type="submit">Send</button>
+          <button type="submit" disabled={loading}>Send</button>
         </form>
       </main>
     </div>
