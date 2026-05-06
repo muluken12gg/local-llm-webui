@@ -1,0 +1,12 @@
+{
+  "name": "ollama-chat",
+  "version": "1.0.0",
+  "description": "Offline chat interface with Ollama",
+  "main": "server/index.js",
+  "scripts": {
+    "install-all": "npm install && cd client && npm install && cd ..",
+    "build": "cd client && npm run build && cd ..",
+    "start": "npm run build && node server/index.js",
+    "dev": "concurrently \"cd server && npm start\" \"cd client && npm run dev\""
+  }
+}

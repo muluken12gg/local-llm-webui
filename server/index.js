@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,10 @@ const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static React frontend
+const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(clientBuildPath));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -83,8 +88,13 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// Serve React app for all other routes (SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Proxying Ollama at: ${OLLAMA_URL}`);
 });
