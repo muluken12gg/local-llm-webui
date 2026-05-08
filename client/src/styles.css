@@ -64,6 +64,16 @@ header h1 {
   color: #b91c1c;
 }
 
+.status-banner.listening {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-banner.speaking {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 .messages {
   min-height: 320px;
   margin-bottom: 1rem;
@@ -127,6 +137,53 @@ header h1 {
 .chat-form button:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+}
+
+.voice-button {
+  margin: 0 0.5rem;
+  padding: 0 1rem;
+  border: 1px solid #d2d6dc;
+  border-radius: 999px;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.voice-button:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.voice-button.listening {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+  animation: pulse 1.5s infinite;
+}
+
+.stop-speak-button {
+  margin-left: 0.5rem;
+  padding: 0 1rem;
+  border: 1px solid #ef4444;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.stop-speak-button:hover {
+  background: #fee2e2;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .placeholder {
