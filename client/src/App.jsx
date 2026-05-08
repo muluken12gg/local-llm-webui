@@ -6,14 +6,36 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const messagesEndRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const speechSynthRef = useRef(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [micPermission, setMicPermission] = useState('unknown'); // 'unknown', 'granted', 'denied'
 
   // Initialize speech recognition
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const checkSpeechSupport = async () => {
+      // Check if browser supports speech recognition
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        console.warn('Speech recognition not supported in this browser');
+        setSpeechSupported(false);
+        return;
+      }
+
+      setSpeechSupported(true);
+
+      // Check microphone permission
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+        setMicPermission(permissionStatus.state);
+
+        permissionStatus.onchange = () => {
+          setMicPermission(permissionStatus.state);
+        };
+      } catch (err) {
+        console.warn('Could not check microphone permission:', err);
+        // Try to request permission by attempting to use speech recognition
+        setMicPermission('unknown');
+      }
+
+      // Initialize speech recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
@@ -22,11 +44,17 @@ function App() {
 
       recognitionRef.current.onstart = () => {
         setIsListening(true);
+        setError(''); // Clear any previous errors
       };
 
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        setMessage(transcript);
+        if (transcript && transcript.trim()) {
+          setMessage(transcript.trim());
+          setError(''); // Clear error on successful transcription
+        } else {
+          setError('No speech detected. Please speak clearly and try again.');
+        }
       };
 
       recognitionRef.current.onend = () => {
@@ -34,16 +62,36 @@ function App() {
       };
 
       recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('Speech recognition error:', event.error, event);
         setIsListening(false);
-        setError('Voice recognition failed. Please try again.');
-      };
-    }
 
-    // Initialize speech synthesis
-    if ('speechSynthesis' in window) {
-      speechSynthRef.current = window.speechSynthesis;
-    }
+        // Provide specific error messages
+        let errorMessage = 'Voice recognition failed.';
+        switch (event.error) {
+          case 'not-allowed':
+            errorMessage = 'Microphone access denied. Please allow microphone access and try again.';
+            setMicPermission('denied');
+            break;
+          case 'no-speech':
+            errorMessage = 'No speech detected. Please speak clearly and try again.';
+            break;
+          case 'audio-capture':
+            errorMessage = 'No microphone found. Please check your microphone and try again.';
+            break;
+          case 'network':
+            errorMessage = 'Network error occurred. Please check your connection and try again.';
+            break;
+          case 'service-not-allowed':
+            errorMessage = 'Speech recognition service not allowed. Please try again.';
+            break;
+          default:
+            errorMessage = `Voice recognition failed: ${event.error}. Please try again.`;
+        }
+        setError(errorMessage);
+      };
+    };
+
+    checkSpeechSupport();
 
     return () => {
       if (recognitionRef.current) {
@@ -89,10 +137,32 @@ function App() {
   }, [messages]);
 
   // Voice functions
-  const startListening = () => {
+  const startListening = async () => {
+    if (!speechSupported) {
+      setError('Voice recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    if (micPermission === 'denied') {
+      setError('Microphone access is blocked. Please enable microphone access in your browser settings and refresh the page.');
+      return;
+    }
+
     if (recognitionRef.current && !isListening) {
       setError('');
-      recognitionRef.current.start();
+      try {
+        // Request microphone permission if not already granted
+        if (micPermission === 'unknown' || micPermission === 'prompt') {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+          setMicPermission('granted');
+        }
+
+        recognitionRef.current.start();
+      } catch (err) {
+        console.error('Failed to start speech recognition:', err);
+        setError('Could not access microphone. Please check your microphone settings and try again.');
+        setMicPermission('denied');
+      }
     }
   };
 
@@ -222,13 +292,23 @@ function App() {
             placeholder="Type your message..."
             disabled={loading}
           />
-          <button type="button" 
-                  onClick={isListening ? stopListening : startListening}
-                  className={`voice-button ${isListening ? 'listening' : ''}`}
-                  disabled={loading}
-                  title={isListening ? 'Stop listening' : 'Start voice input'}>
-            {isListening ? '⏹️' : '🎤'}
-          </button>
+          {speechSupported ? (
+            <button type="button" 
+                    onClick={isListening ? stopListening : startListening}
+                    className={`voice-button ${isListening ? 'listening' : ''} ${micPermission === 'denied' ? 'denied' : ''}`}
+                    disabled={loading}
+                    title={
+                      micPermission === 'denied' 
+                        ? 'Microphone access denied' 
+                        : isListening 
+                          ? 'Stop listening' 
+                          : 'Start voice input'
+                    }>
+              {isListening ? '⏹️' : micPermission === 'denied' ? '🚫' : '🎤'}
+            </button>
+          ) : (
+            <span className="voice-unsupported" title="Voice recognition not supported in this browser">🚫</span>
+          )}
           <button type="submit" disabled={loading}>Send</button>
           {isSpeaking && (
             <button type="button" 
